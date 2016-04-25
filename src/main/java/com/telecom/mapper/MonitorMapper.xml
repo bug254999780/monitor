@@ -1,0 +1,489 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.telecom.model.MonitorMapper">
+	<select id="noticeinfo" resultType="map">
+		SELECT
+		title,content, date_format(createdate,'%Y-%m-%d %T') createdate from notice_info WHERE status ='1' and
+		startdate &lt;= NOW() and enddate &gt;= NOW() ORDER BY createdate desc
+	</select>
+	<select id="treeinfo" resultType="map">
+		select
+		ai.areacode
+		'aareacode',ai.areaname,mi.macshineroomcode,mi.macshineroom,mi.areacode
+		from area_info ai left join macshineroom_info mi on ai.areacode =
+		mi.areacode order by ai.sort,mi.sort desc
+	</select>
+	<select id="deviceinfo" resultType="map" parameterType="java.util.Map">
+		select
+		device_name,_ip,device_code,devicemacshineroomcode,deviceaddress,guarantee,dname    
+		from device_info dii
+		<if test="code !=null and code !='all'.toString() ">
+			where dii.devicemacshineroomcode =#{code}
+		</if>
+		order by dii.device_name asc,dii.sort desc
+	</select>
+	<select id="deviceforarea" resultType="map" parameterType="java.lang.String">
+		select
+		device_name,_ip,device_code,devicemacshineroomcode,deviceaddress,guarantee,dname 
+		from device_info dii where dii.devicemacshineroomcode in (select
+		macshineroomcode from macshineroom_info where areacode=#{code}
+		)
+	</select>
+	<select id="imginfo" resultType="map">
+		SELECT
+		type,exceptionimg,normalimg from ico_info
+	</select>
+	<select id="serverrecord" resultType="map">
+
+		select
+		sdc.*,d.devicemacshineroomcode,d.deviceaddress,d.guarantee,m.macshineroom,m.macshineroommanager,ain.areaname,d.dname 
+		from (select
+		a._id,a.equipmentcode,a.ip,a.cpu,a.memory,a.desk,date_format(a.receivetime,'%Y-%m-%d %T') receivetime from
+		serverrecord a inner join(
+		select MAX(scc._id) _id,max(scc.receivetime) as
+		receivetime from serverrecord scc where
+		receivetime &gt;=
+		date_sub(curdate() ,interval 1 day) 
+		group by scc.equipmentcode
+		)b on a._id
+		=b._id) sdc left join device_info d on
+		sdc.equipmentcode
+		=d.device_code left join macshineroom_info m on
+		d.devicemacshineroomcode=m.macshineroomcode left join area_info ain on
+		ain.areacode=m.areacode
+	</select>
+	<select id="upsrecord" resultType="map">
+		select
+		sdc.*,d.devicemacshineroomcode,d.deviceaddress,d.guarantee,m.macshineroom,m.macshineroommanager,ain.areaname ,d.dname 
+		from (select
+		a.id,a.equipmentcode,a.ustatus,date_format(a.receivetime,'%Y-%m-%d %T') receivetime from
+		upsrecord a
+		inner
+		join(
+		select MAX(scc.id) id,max(scc.receivetime) as receivetime 
+		from upsrecord
+		scc where receivetime 
+		&gt;= date_sub(curdate() ,interval 1 day)
+		group by 
+		scc.equipmentcode
+		)b on a.id = b.id) sdc left join
+		device_info
+		d on sdc.equipmentcode
+		=d.device_code left join
+		macshineroom_info m on
+		d.devicemacshineroomcode=m.macshineroomcode left
+		join area_info ain on
+		ain.areacode=m.areacode
+	</select>
+	<select id="switchesrecord" resultType="map">
+		select
+		sdc.*,d.devicemacshineroomcode,d.deviceaddress,d.guarantee,m.macshineroom,m.macshineroommanager,ain.areaname,d.dname 
+		from (
+		select
+		a.id,a.equipmentcode,a.packetsloss,a.networkdelayrate,date_format(a.receivetime,'%Y-%m-%d %T') receivetime 
+		from
+		switchesrecord a inner join(
+		select MAX(scc.id) id,max(scc.receivetime) as
+		receivetime from switchesrecord scc
+		where receivetime 
+		&gt;= date_sub(curdate() ,interval 1 day) 
+		group by 
+		scc.equipmentcode
+		)b on a.id
+		=b.id) sdc left join device_info d on sdc.equipmentcode
+		=d.device_code
+		left join macshineroom_info m on
+		d.devicemacshineroomcode=m.macshineroomcode left join area_info ain on
+		ain.areacode=m.areacode
+	</select>
+	<select id="temperaturerecord" resultType="java.util.Map">
+		select
+		sdc.*,d.devicemacshineroomcode,d.deviceaddress,d.guarantee AS
+		guarantee ,m.macshineroom,m.macshineroommanager,ain.areaname,d.dname  
+		from (
+		select
+		a.id,a.equipmentcode,a.temperature,a.humidity,date_format(a.receivetime,'%Y-%m-%d %T') receivetime from
+		temperaturerecord a inner join(
+		select MAX(scc.id) id,max(scc.receivetime) as
+		receivetime from temperaturerecord scc
+		where receivetime 
+		&gt;= date_sub(curdate() ,interval 1 day)
+		group by 
+		scc.equipmentcode
+		)b on a.id =
+		b.id) sdc left join device_info d on sdc.equipmentcode
+		=d.device_code
+		left join macshineroom_info m on
+		d.devicemacshineroomcode=m.macshineroomcode left join area_info ain on
+		ain.areacode=m.areacode
+	</select>
+	<select id="warningrecord" resultType="map">
+		select
+		equipmenttype,equipmentcode ,targetcode
+		,monitorvalue,receivetime,dif.devicemacshineroomcode,dif.dname
+		from
+		warningrecord
+		w left join device_info dif on dif.device_code=w.equipmentcode
+		where
+		status=1 order by receivetime desc
+
+	</select>
+
+
+	<!-- 页面监控 -->
+	<select id="areainfoList" resultType="com.telecom.model.AreaInfo">
+		select
+		areaid,
+		dataNo,
+		areacode,
+		areaname,
+		geology,
+		longitude,
+		dimensions,
+		sort
+		from area_info
+	</select>
+
+	<select id="macshineroomInfoList" resultType="com.telecom.model.MacshineroomInfo"
+		parameterType="List">
+		select
+		dataNo,
+		macshineRoomCode,
+		macshineRoom,
+		areaCode,
+		macshineRoomManager,
+		sort
+		from macshineroom_info where 1=1 and areaCode in 
+		<foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+                #{item}  
+        </foreach>  
+		
+	</select>
+
+	<select id="deviceInfoList" resultType="com.telecom.model.DeviceInfo"
+		parameterType="List">
+		select
+		device_name,
+		_ip,
+		device_code,
+		devicemacshineroomcode,
+		deviceaddress,
+		guarantee
+		from device_info where 1=1 and devicemacshineroomcode in 
+		<foreach item="item" index="index" collection="list" open="(" separator="," close=")">  
+                #{item}  
+        </foreach>  
+         group by device_name
+	</select>
+
+	<select id="thresholdManageList" resultType="com.telecom.model.ThresholdManage"
+		parameterType="String">
+		select
+		dataNo,
+		equipmentType,
+		targetName,
+		targetCode,
+		tm.MaxValue,
+		minValue,
+		cycleTime
+		from thresholdmanage tm where
+		equipmentType = #{equipmentType}
+	</select>
+
+
+	<!-- 【实时监测】 数据 -->
+	<select id="temperatureRecordList" resultType="com.telecom.model.TemperatureRecord"
+		parameterType="java.util.Map">
+		select id, equipmentcode, temperature, humidity, receiveTime from
+		temperaturerecord
+		where equipmentcode = #{equipmentcode}
+		<if test='startTime != null'>
+			<![CDATA[ and receiveTime >= ${startTime} ]]>
+		</if>
+		<if test='endTime != null'>	
+			<![CDATA[ and ReceiveTime <= ${endTime} ]]>
+		</if>
+		ORDER BY ReceiveTime
+	</select>
+	
+		<!-- 温湿度数据  001 温度，002湿度-->
+	<select id="temperatureRecordListgb" resultType="java.util.Map"
+		parameterType="java.util.Map">
+		select 
+		ai.areaname AS areaName, mi.MacshineRoom AS roomName 
+		
+		<if test="typecode != null and typecode =='001'.toString()">
+		 ,temperature temperatures
+		</if>
+		<if test="typecode != null and typecode =='002'.toString()">
+		 , humidity humidity
+		</if>
+		<if test="type != null and type =='H'.toString()">
+		 , date_format(receiveTime,'%Y-%m-%d %H') AS receiveTimes  
+		</if>
+		<if test="type != null and type =='D'.toString()">
+		 , date_format(receiveTime,'%Y-%m-%d') AS receiveTimes  
+		</if>
+		<if test="type != null and type =='M'.toString()">
+		 , date_format(receiveTime,'%Y-%m') AS receiveTimes 
+		</if>
+		<if test="type != null and type =='Y'.toString()">
+		 , date_format(receiveTime,'%Y') AS receiveTimes 
+		</if>
+		<if test="type == null || type == 'null'.toString()">
+		  , date_format(receiveTime,'%Y-%m-%d %T')  AS receiveTimes  
+		</if>
+		    from temperaturerecord t 
+		    
+		  <if test="areacode != null and macshineroomcode == null ">
+		    INNER JOIN  ( select d.Device_code  from device_info d where d.DeviceMacshineRoomCode in (select  m.MacshineRoomCode     from   macshineroom_info m  where m.areacode in <![CDATA[ (${areacode}) ]]>  )) ttt on t.Equipmentcode=ttt.Device_code   
+		</if>
+		    <if test="areacode != null and macshineroomcode != null ">
+		   INNER JOIN  ( select d.Device_code  from device_info d where d.DeviceMacshineRoomCode in <![CDATA[  (${macshineroomcode}) ]]> ) ttt on t.Equipmentcode=ttt.Device_code  
+		</if>
+		    
+		    left join device_info di on 
+			di.Device_code = Equipmentcode
+			LEFT JOIN macshineroom_info mi on 
+			mi.MacshineRoomCode = di.DeviceMacshineRoomCode
+			LEFT JOIN area_info ai on 
+			ai.areacode = mi.AreaCode
+		    where  t.ReceiveTime  &gt;=   date_sub(now(), interval 1 hour)
+<!-- 		<if test="areacode != null and macshineroomcode == null ">
+		   and t.Equipmentcode in( select d.Device_code  from device_info d where d.DeviceMacshineRoomCode in (select  m.MacshineRoomCode     from   macshineroom_info m  where m.areacode in <![CDATA[ (${areacode}) ]]>  ))
+		</if>
+		 -->
+		GROUP BY roomName, receiveTimes
+		ORDER BY receiveTimes
+	</select>
+	
+	<!-- 服务器数据  003 memory ，004 cpu, 005 desk-->
+	<select id="serverRecordListgb" resultType="java.util.Map"
+		parameterType="java.util.Map">
+		select 
+		ai.areaname AS areaName, mi.MacshineRoom AS roomName 
+		<if test="typecode != null and typecode =='004'.toString()">
+		 , round(avg(cpu),1) cpu
+		</if>
+		<if test="typecode != null and typecode =='003'.toString()">
+		 , round(avg(memory),1) memory
+		</if>
+		<if test="typecode != null and typecode =='005'.toString()">
+		,  round(avg(desk),1) desk
+		</if>
+		<if test="type != null and type =='H'.toString()">
+		 , date_format(receiveTime,'%Y-%m-%d %H') AS receiveTimes 
+		</if>
+		<if test="type != null and type =='D'.toString()">
+		 , date_format(receiveTime,'%Y-%m-%d') AS receiveTimes 
+		</if>
+		<if test="type != null and type =='M'.toString()">
+		 , date_format(receiveTime,'%Y-%m') AS receiveTimes 
+		</if>
+		<if test="type != null and type =='Y'.toString()">
+		 , date_format(receiveTime,'%Y') AS receiveTimes  
+		</if>
+		<if test="type == null || type == 'null'.toString()">
+		   , date_format(receiveTime,'%Y-%m-%d %T')  AS receiveTimes  
+		</if>
+		
+		
+		     from serverrecord t 
+		<if test="areacode != null and macshineroomcode == null ">
+		    INNER JOIN  ( select d.Device_code  from device_info d where d.DeviceMacshineRoomCode in (select  m.MacshineRoomCode     from   macshineroom_info m  where m.areacode in <![CDATA[ (${areacode}) ]]>  )) ttt on t.Equipmentcode=ttt.Device_code   
+		</if>
+		    <if test="areacode != null and macshineroomcode != null ">
+		   INNER JOIN  ( select d.Device_code  from device_info d where d.DeviceMacshineRoomCode in <![CDATA[  (${macshineroomcode}) ]]> ) ttt on t.Equipmentcode=ttt.Device_code  
+		</if>
+		    left join device_info di on 
+			di.Device_code = Equipmentcode
+			LEFT JOIN macshineroom_info mi on 
+			mi.MacshineRoomCode = di.DeviceMacshineRoomCode
+			LEFT JOIN area_info ai on 
+			ai.areacode = mi.AreaCode
+		    where  t.ReceiveTime  &gt;=   date_sub(now(), interval 1 hour)
+		
+		<!-- <if test="areacode != null and macshineroomcode == null ">
+		    and t.Equipmentcode in( select d.Device_code  from device_info d where d.DeviceMacshineRoomCode in (select  m.MacshineRoomCode     from   macshineroom_info m  where m.areacode in <![CDATA[ (${areacode}) ]]> ))
+		</if>
+		<if test="areacode != null and macshineroomcode != null ">
+		   	and t.Equipmentcode in( select d.Device_code  from device_info d where d.DeviceMacshineRoomCode in <![CDATA[ (${macshineroomcode}) ]]> )
+		</if> -->
+		GROUP BY roomName, receiveTimes
+		ORDER BY receiveTimes
+	</select>
+
+
+
+	<!-- 交换机数据  006 networkdelayrate 网络延迟率, 007 packetsloss  丢包率-->
+	<select id="switchesrecordRecordListgb" resultType="java.util.Map"
+		parameterType="java.util.Map">
+		select 
+		ai.areaname AS areaName, mi.MacshineRoom AS roomName 
+		<if test="typecode != null and typecode =='007'.toString()">
+		, round(avg(packetsloss),2) packetsloss
+		</if>
+		<if test="typecode != null and typecode =='006'.toString()">
+		, round(avg(networkdelayrate),2) networkdelayrate
+		</if>
+		
+		<if test="type != null and type =='H'.toString()">
+		 , date_format(receiveTime,'%Y-%m-%d %H') AS receiveTimes 
+		</if>
+		<if test="type != null and type =='D'.toString()">
+		 , date_format(receiveTime,'%Y-%m-%d') AS receiveTimes 
+		</if>
+		<if test="type != null and type =='M'.toString()">
+		 , date_format(receiveTime,'%Y-%m') AS receiveTimes 
+		</if>
+		<if test="type != null and type =='Y'.toString()">
+		 , date_format(receiveTime,'%Y') AS receiveTimes  
+		</if>
+		<if test="type == null || type == 'null'.toString()">
+		  , date_format(receiveTime,'%Y-%m-%d %T')   AS receiveTimes  
+		</if>
+		
+		
+		    from switchesrecord t 
+		<if test="areacode != null and macshineroomcode == null ">
+		    INNER JOIN  ( select d.Device_code  from device_info d where d.DeviceMacshineRoomCode in (select  m.MacshineRoomCode     from   macshineroom_info m  where m.areacode in <![CDATA[ (${areacode}) ]]>  )) ttt on t.Equipmentcode=ttt.Device_code   
+		</if>
+		    <if test="areacode != null and macshineroomcode != null ">
+		   INNER JOIN  ( select d.Device_code  from device_info d where d.DeviceMacshineRoomCode in <![CDATA[  (${macshineroomcode}) ]]> ) ttt on t.Equipmentcode=ttt.Device_code  
+		</if>
+		    left join device_info di on 
+			di.Device_code = Equipmentcode
+			LEFT JOIN macshineroom_info mi on 
+			mi.MacshineRoomCode = di.DeviceMacshineRoomCode
+			LEFT JOIN area_info ai on 
+			ai.areacode = mi.AreaCode
+		   where  t.ReceiveTime  &gt;=   date_sub(now(), interval 1 hour)
+
+			
+		
+		<!-- <if test="areacode != null and macshineroomcode == null ">
+		    and t.Equipmentcode in( select d.Device_code  from device_info d where d.DeviceMacshineRoomCode in (select  m.MacshineRoomCode     from   macshineroom_info m  where m.areacode in <![CDATA[ (${areacode}) ]]> ))
+		</if>
+		<if test="areacode != null and macshineroomcode != null ">
+			and t.Equipmentcode in( select d.Device_code  from device_info d where d.DeviceMacshineRoomCode in <![CDATA[ (${macshineroomcode}) ]]> )
+		</if> -->
+		GROUP BY roomName, receiveTimes
+		ORDER BY receiveTimes
+	</select>
+	
+	<select id="thresholdManageListex" resultType="com.telecom.model.ThresholdManage">
+		select 
+		ts.equipmenttype,
+		ts.targetname,
+		ts.targetcode,
+		ts.maxvalue,
+		ts.minvalue ,
+		ts.cycletime 
+		from thresholdmanage ts
+	</select>
+	<!-- 首页告警当天数据  -->
+		<select id="serverrecord_now" resultType="map">
+		
+		<!-- 
+		select
+		sdc.*,d.device_name as equipmentType    ,d.devicemacshineroomcode,d.deviceaddress,d.guarantee,m.macshineroom,m.macshineroommanager,ain.areaname,d.dname  
+		from (select
+		a._id,a.equipmentcode,a.ip,a.cpu,a.memory,a.desk,date_format(a.receivetime,'%Y-%m-%d %T') receivetime from
+		serverrecord a inner join(
+		select MAX(scc._id) _id,max(scc.receivetime) as
+		receivetime from serverrecord scc where
+		receivetime &gt;= curdate()   
+		group by scc.equipmentcode
+		)b on a._id
+		=b._id) sdc left join device_info d on
+		sdc.equipmentcode
+		=d.device_code  left join macshineroom_info m on
+		d.devicemacshineroomcode=m.macshineroomcode left join area_info ain on
+		ain.areacode=m.areacode -->
+		
+		
+			SELECT ddb.*,dvi.Device_code as "equipmentcode" ,dvi.device_name as equipmentType,dvi.devicemacshineroomcode  from  (select
+		sdc.*   ,d.deviceaddress,d.guarantee,m.macshineroom,m.macshineroommanager,ain.areaname,d.dname  
+		from (select
+		a._id,a.equipmentcode "ecode",a.ip,a.cpu,a.memory,a.desk,date_format(a.receivetime,'%Y-%m-%d %T') receivetime from
+		serverrecord a inner join(
+		select MAX(scc._id) _id,max(scc.receivetime) as
+		receivetime from serverrecord scc where
+		receivetime &gt;= curdate()   
+		group by scc.equipmentcode
+		)b on a._id
+		=b._id) sdc left join device_info d on
+		sdc.ecode
+		=d.device_code  left join macshineroom_info m on
+		d.devicemacshineroomcode=m.macshineroomcode left join area_info ain on
+		ain.areacode=m.areacode) ddb RIGHT JOIN device_info dvi ON  ddb.ecode=dvi.Device_code where dvi.Device_name='3'
+	</select>
+	<select id="upsrecord_now" resultType="map">
+		SELECT ddb.*,dvi.Device_code as "equipmentcode" ,dvi.device_name as equipmentType,dvi.devicemacshineroomcode  from  (select
+		sdc.*   ,d.deviceaddress,d.guarantee,m.macshineroom,m.macshineroommanager,ain.areaname, d.dname  
+		from (select
+		a.id,a.equipmentcode "ecode",a.ustatus,date_format(a.receivetime,'%Y-%m-%d %T') receivetime from
+		upsrecord a
+		inner
+		join(
+		select MAX(scc.id) id,max(scc.receivetime) as receivetime 
+		from upsrecord
+		scc where receivetime 
+		&gt;= curdate() 
+		group by 
+		scc.equipmentcode
+		)b on a.id = b.id) sdc left join
+		device_info
+		d on sdc.ecode
+		=d.device_code  left join macshineroom_info m on
+		d.devicemacshineroomcode=m.macshineroomcode left join area_info ain on
+		ain.areacode=m.areacode
+		) ddb RIGHT JOIN device_info dvi ON  ddb.ecode=dvi.Device_code where dvi.Device_name='2'
+		
+	</select>
+	<select id="switchesrecord_now" resultType="map">
+		SELECT ddb.*,dvi.Device_code as "equipmentcode" ,dvi.device_name as equipmentType,dvi.devicemacshineroomcode  from  (select
+		sdc.*   ,d.deviceaddress,d.guarantee,m.macshineroom,m.macshineroommanager,ain.areaname , d.dname  
+		from (
+		select
+		a.id,a.equipmentcode "ecode",a.packetsloss,a.networkdelayrate,date_format(a.receivetime,'%Y-%m-%d %T') receivetime 
+		from
+		switchesrecord a inner join(
+		select MAX(scc.id) id,max(scc.receivetime) as
+		receivetime from switchesrecord scc
+		where receivetime 
+		&gt;= curdate()   
+		group by 
+		scc.equipmentcode
+		)b on a.id
+		=b.id) sdc left join device_info d on sdc.ecode
+		=d.device_code left join macshineroom_info m on
+		d.devicemacshineroomcode=m.macshineroomcode left join area_info ain on
+		ain.areacode=m.areacode ) ddb RIGHT JOIN device_info dvi ON  ddb.ecode=dvi.Device_code where dvi.Device_name='4'
+		
+	</select>
+	<select id="temperaturerecord_now" resultType="java.util.Map">
+		SELECT ddb.*,dvi.Device_code as "equipmentcode" ,dvi.device_name as equipmentType ,dvi.devicemacshineroomcode from  ( select
+		sdc.* ,d.deviceaddress,d.guarantee,m.macshineroom,m.macshineroommanager,ain.areaname , d.dname  
+		from (
+		select
+		a.id,a.equipmentcode "ecode",a.temperature,a.humidity,date_format(a.receivetime,'%Y-%m-%d %T') receivetime from
+		temperaturerecord a inner join(
+		select MAX(scc.id) id,max(scc.receivetime) as
+		receivetime from temperaturerecord scc
+		where receivetime 
+		&gt;= curdate()  
+		group by 
+		scc.equipmentcode
+		)b on a.id =
+		b.id) sdc left join device_info d on sdc.ecode
+		=d.device_code left join macshineroom_info m on
+		d.devicemacshineroomcode=m.macshineroomcode left join area_info ain on
+		ain.areacode=m.areacode ) ddb RIGHT JOIN device_info dvi ON  ddb.ecode=dvi.Device_code where dvi.Device_name='1'
+	</select>
+	
+	
+</mapper>

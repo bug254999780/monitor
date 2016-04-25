@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.telecom.model.WarningRecordMapper">
+
+	<select id="warningRecordList" resultType="com.telecom.model.WarningRecord"
+		parameterType="map">
+		select ai.areaname AS reserve2, wr.dataNo AS dataNo, mi.MacshineRoom
+		AS
+		reserve1, wr.EquipmentType AS equipmentType, wr.EquipmentCode AS
+		equipmentCode, wr.monitorValue AS monitorValue, wr.dispose AS
+		dispose,DATE_FORMAT(wr.receiveTime,"%Y-%m-%d %T") AS receiveTime,wr.targetCode AS targetCode,
+		mi.MacshineRoomCode AS
+		MacshineRoomCode from warningrecord wr
+		LEFT JOIN
+		device_info di on di.Device_code = wr.EquipmentCode
+		LEFT JOIN
+		macshineroom_info mi on mi.MacshineRoomCode =
+		di.DeviceMacshineRoomCode
+		LEFT JOIN area_info ai on ai.areacode =
+		mi.AreaCode
+		where
+		<if test="code !=null and code =='1'.toString() ">
+			 	receivetime > curdate() and
+		</if>
+		wr.status = '1'
+		order by wr.ReceiveTime
+
+	</select>
+
+	<update id="updateWarningRecord" parameterType="com.telecom.model.WarningRecord">
+		update
+		warningrecord set
+		dispose = #{dispose},
+		reserve1 ='1'
+		where dataNo =
+		#{dataNo} and status = '1'
+	</update>
+
+	<!-- 异常记录表分页 -->
+	<select id="warningRecordCountLimit" resultType="java.lang.Integer" parameterType="java.util.Map">
+		select count(*) from warningrecord wr
+		LEFT JOIN
+		device_info di on di.Device_code = wr.EquipmentCode
+		LEFT JOIN
+		macshineroom_info mi on mi.MacshineRoomCode =
+		di.DeviceMacshineRoomCode
+		LEFT JOIN area_info ai on ai.areacode =
+		mi.AreaCode
+		where
+		<if test="code !=null and  code == '1'.toString() ">
+			receivetime > curdate()  and
+		</if>
+		<!-- 区域匹配 -->
+		<if test="type !=null and type =='1'.toString() ">
+				ai.AreaCode = #{AreaCode}  and 
+		</if>
+		<!-- 机房匹配 -->
+		<if test="type !=null and type =='2'.toString() ">
+			mi.MacshineRoomCode=#{MacshineRoomCode} and
+		</if>
+		<!-- 机房匹配 -->
+		<if test="type !=null and type =='3'.toString() ">
+			di.Device_code=#{Device_code} and
+		</if>
+		wr.status = '1'
+		order by wr.ReceiveTime
+		
+	</select>
+
+	<select id="warningRecordListLimit" resultType="com.telecom.model.WarningRecord"
+		parameterType="java.util.Map">
+		select dt.* from(
+		select ai.areaname AS reserve2, wr.dataNo AS dataNo, mi.MacshineRoom AS reserve1, 
+		wr.EquipmentType AS equipmentType, wr.EquipmentCode AS
+		equipmentCode, wr.monitorValue AS monitorValue, wr.dispose AS
+		dispose,DATE_FORMAT(wr.receiveTime,"%Y-%m-%d %T") AS receiveTime,wr.targetCode AS targetCode,
+		mi.MacshineRoomCode AS MacshineRoomCode, di.dname AS dname
+		from warningrecord wr
+		LEFT JOIN
+		device_info di on di.Device_code = wr.EquipmentCode
+		LEFT JOIN
+		macshineroom_info mi on mi.MacshineRoomCode =
+		di.DeviceMacshineRoomCode
+		LEFT JOIN area_info ai on ai.areacode =
+		mi.AreaCode
+		where
+		<if test="code !=null and code == '1'.toString() ">
+			receivetime > curdate()  and
+		</if>
+		<!-- 区域匹配 -->
+		<if test="type !=null and type =='1'.toString() ">
+				ai.AreaCode = #{AreaCode}  and 
+		</if>
+		<!-- 机房匹配 -->
+		<if test="type !=null and type =='2'.toString() ">
+			mi.MacshineRoomCode=#{MacshineRoomCode} and
+		</if>
+		<!-- 机房匹配 -->
+		<if test="type !=null and type =='3'.toString() ">
+			di.Device_code=#{Device_code} and
+		</if>
+		wr.status = '1'
+		order by wr.ReceiveTime 
+			<if test="minvalue !=null and maxvalue !=null ">
+			 	desc
+			</if>
+		) dt 
+		<if test="minvalue !=null and maxvalue !=null ">
+		 LIMIT #{minvalue},#{maxvalue}
+		</if>
+	</select>
+
+	
+</mapper>

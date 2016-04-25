@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:task="http://www.springframework.org/schema/task"  
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+		http://www.springframework.org/schema/task  http://www.springframework.org/schema/task/spring-task-3.1.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd">
+	
+	<mvc:annotation-driven/>
+	
+	<!-- 开启这个配置，spring才能识别@Scheduled注解 -->
+	<task:annotation-driven scheduler="qbScheduler" mode="proxy" />
+	<task:scheduler id="qbScheduler" pool-size="10" />
+	
+	<!-- 配置 spring 控制层和服务层 -->
+	<context:component-scan base-package="com.telecom" use-default-filters="true">
+		<context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+		<context:include-filter type="annotation" expression="org.springframework.stereotype.Service"/>
+		<!-- context:include-filter
+				此标签的含义是：在其扫描到的所有类中，全部自动加上注解并纳入Spring容器中，比如有个类为 -->
+		<!-- exclude-filter 排除扫描到的所有类，不纳入Spring容器中
+		 <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Service" /> -->
+		<!-- <context:include-filter type="annotation" expression="org.springframework.web.bind.annotation.ControllerAdvice"/> -->
+	</context:component-scan>
+	
+	<aop:aspectj-autoproxy proxy-target-class="true"/>
+	
+	<!-- 根据内容自动转向视图解析器配置，根据不同的类型转向到不同的视图解析器，位于视图解析器链的顶端 -->
+	<!-- 解析返回值 -->
+	<bean id="contentNegotiationManager" class="org.springframework.web.servlet.view.ContentNegotiatingViewResolver">
+		<property name="order" value="0"></property>
+		<property name="defaultContentType" value="text/html"></property>
+		<property name="favorParameter" value="true"></property>
+		<property name="favorPathExtension" value="true"></property>
+		<property name="ignoreAcceptHeader" value="false"></property>
+		<property name="parameterName" value="format"></property>
+		<property name="mediaTypes">
+			<map>
+				<entry key="htm" value="text/html"></entry>
+				<entry key="html" value="text/html"></entry>
+				<entry key="json" value="application/json"></entry>
+				<entry key="js" value="application/js"></entry>
+				<entry key="xml" value="application/xml"></entry>
+			</map>
+		</property>
+		<property name="useJaf" value="true"></property>
+		<property name="defaultViews">
+			<list>
+				<bean class="org.springframework.web.servlet.view.json.MappingJackson2JsonView">
+				</bean>
+			</list>
+		</property>
+	</bean>
+	
+	<!-- 默认的资源视图解析器，设置为从Web根目录下开始寻找 -->
+	<bean id="jspViewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+	    <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+	    <property name="order" value="1"></property>
+	    <property name="prefix" value="/jsp/"></property>
+	    <property name="suffix" value=".jsp"/>
+	</bean>
+	
+	<!-- 容器默认的DefaultServletHandler处理 所有静态内容与无RequestMapping处理的URL-->	
+	<!-- <mvc:resources mapping="/**" location="/" /> -->
+
+	   
+</beans>

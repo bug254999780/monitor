@@ -1,0 +1,13 @@
+@charset "utf-8";
+/* CSS Document */
+*{padding:0; margin:0;}
+img{border:0;}
+
+.error{background:url(images/error.png) no-repeat; width:676px; height:454px; margin:30px auto; position:relative;}
+.errorwz{position:absolute; left:370px; top:90px; font-size:24px; color:#fff; line-height:30px; font-family:"微软雅黑"; width:240px; overflow:hidden;}
+
+.sorry{background:url(images/sorry.png) no-repeat; width:719px; height:432px; margin:30px auto; position:relative; font-family:"微软雅黑"; }
+.sorrywz{position:absolute; left:320px; top:60px; width:230px; font-size:18px; line-height:30px; color:#5d5e5e}
+.sorryfz{position:absolute; right:10px; bottom:10px; color:#d1b206; font-size:15px;}
+.sorryfz a{color:#d1b206; text-decoration:none; font-weight:bold}
+.sorryfz a:hover{text-decoration:underline;}

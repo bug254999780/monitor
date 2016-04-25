@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.telecom.model.ModuleMapper">
+
+    <select id="selectModuleByID" parameterType="int" resultType="com.telecom.model.Module">
+        select * from module where ID = #{id}
+    </select>
+    
+    <select id="moduleList" resultType="com.telecom.model.Module" >
+        select * from module where display = 1 
+    </select>
+    
+    <select id="moduleCount" resultType="java.lang.Integer" >
+		select count(*) from module where display = 1
+	</select>
+	
+	 <select id="modulePageList" parameterType="java.util.Map" resultType="com.telecom.model.Module">
+		select * from module where display = 1 ORDER BY create_time desc limit #{start},#{end}
+	</select>
+	
+	<select id="moduleListByRoleId" resultType="com.telecom.model.Module" >
+		select module.* from role_module INNER JOIN module ON role_module.module_id = module.id where role_module.role_id = #{role_id} group by module.module_name ORDER BY module.create_time desc;
+	</select>
+	
+	<select id="moduleListByUserId" resultType="com.telecom.model.Module" parameterType="int">
+		select module.* from role_module INNER JOIN module ON role_module.module_id = module.id INNER JOIN user_role ON user_role.role_id = role_module.role_id where user_role.user_id = #{user_id} group by module.module_name ORDER BY module.create_time desc;
+	</select>
+	
+    <insert id="addModule" parameterType="com.telecom.model.Module" 
+        useGeneratedKeys="true" keyProperty="id"> 
+        insert into module(
+        	module_name, 
+        	module_url, 
+        	create_time, 
+        	last_update_time, 
+        	remark, 
+        	attribute_1, 
+        	attribute_2, 
+        	attribute_3, 
+        	attribute_4, 
+        	attribute_5
+        )  
+        values(
+			#{module_name}, 
+			#{module_url}, 
+			#{create_time}, 
+			#{last_update_time}, 
+			#{remark}, 
+			#{attribute_1}, 
+			#{attribute_2}, 
+			#{attribute_3}, 
+			#{attribute_4}, 
+			#{attribute_5}
+		)  
+    </insert>
+    
+    <update id="updateModule" parameterType="com.telecom.model.Module" >
+        update module set 
+	        module_name=#{module_name},
+	   		module_url=#{module_url},
+	        remark=#{remark},
+	        last_update_time=#{last_update_time},
+	        attribute_1=#{attribute_1},
+	        attribute_2=#{attribute_2},
+	        attribute_3=#{attribute_3},
+	        attribute_4=#{attribute_4},
+	        attribute_5=#{attribute_5} 
+        where id=#{id}
+    </update>
+    
+    <delete id="deleteTModule" parameterType="int">
+        delete from module where id=#{id}
+    </delete>
+    
+    <delete id="deleteFModule" parameterType="int">
+        update module set
+        display=0  where id=#{id}
+    </delete>
+</mapper>
